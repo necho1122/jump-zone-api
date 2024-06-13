@@ -12,16 +12,22 @@ app.use(express.json());
 const CONNECTION_STRING = process.env.MONGODB_APP_URL;
 const DATABASENAME = 'jumpzoneapp';
 
-mongoose
-	.connect(CONNECTION_STRING, {
-		dbName: DATABASENAME,
-	})
-	.then(() => {
-		console.log('¡Conectado a MongoDB!');
-	})
-	.catch((err) => {
-		console.error('Error conectando a la base de datos:', err);
-	});
+// Configuración de Mongoose con reintentos
+const connectWithRetry = () => {
+	mongoose
+		.connect(CONNECTION_STRING, {
+			dbName: DATABASENAME,
+		})
+		.then(() => {
+			console.log('¡Conectado a MongoDB!');
+		})
+		.catch((err) => {
+			console.error('Error conectando a la base de datos:', err);
+			setTimeout(connectWithRetry, 5000); // Reintentar cada 5 segundos
+		});
+};
+
+connectWithRetry();
 
 const noteSchema = new mongoose.Schema(
 	{
@@ -45,7 +51,7 @@ app.get('/api/jumpzoneapp/getnotes', async (req, res) => {
 	}
 });
 
-app.post('/api/jumpzoneapp/AddNote', async (req, res) => {
+app.post('/api/jumpzoneapp/addnote', async (req, res) => {
 	try {
 		const { hostName, hostLink, coments } = req.body;
 		const count = await Note.countDocuments({});
