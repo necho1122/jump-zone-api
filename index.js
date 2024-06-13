@@ -1,8 +1,7 @@
 import Express, { json } from 'express';
-import { MongoClient } from 'mongodb';
+import { MongoClient, ServerApiVersion } from 'mongodb';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import process from 'process';
 
 dotenv.config();
 
@@ -13,14 +12,19 @@ app.use(json());
 const CONNECTION_STRING = process.env.MONGODB_APP_URL;
 const DATABASENAME = 'jumpzoneapp';
 
+const client = new MongoClient(CONNECTION_STRING, {
+	serverApi: {
+		version: ServerApiVersion.v1,
+		strict: true,
+		deprecationErrors: true,
+	},
+});
+
 let db;
 
-// Función para conectar a la base de datos
 const connectToDatabase = async () => {
 	try {
-		const client = await MongoClient.connect(CONNECTION_STRING, {
-			useUnifiedTopology: true,
-		});
+		await client.connect();
 		db = client.db(DATABASENAME);
 		console.log('¡Conectado a `' + DATABASENAME + '`!');
 	} catch (error) {
@@ -29,7 +33,6 @@ const connectToDatabase = async () => {
 	}
 };
 
-// Middleware para verificar la conexión a la base de datos
 const checkDbConnection = (req, res, next) => {
 	if (!db) {
 		return res.status(500).send('La base de datos no está conectada');
@@ -37,12 +40,6 @@ const checkDbConnection = (req, res, next) => {
 	next();
 };
 
-// Conectar a la base de datos al iniciar el servidor
-app.listen(5038, () => {
-	connectToDatabase();
-});
-
-// Usar el middleware en las rutas que requieren la conexión a la base de datos
 app.use(checkDbConnection);
 
 app.get('/api/jumpzoneapp/getnotes', async (req, res) => {
@@ -70,3 +67,14 @@ app.post('/api/jumpzoneapp/AddNote', async (req, res) => {
 		res.status(500).send('Error al agregar la nota.');
 	}
 });
+
+// Inicia la conexión a la base de datos y luego el servidor Express
+const startServer = async () => {
+	await connectToDatabase();
+	const PORT = process.env.PORT || 5038;
+	app.listen(PORT, () => {
+		console.log(`Servidor corriendo en el puerto ${PORT}`);
+	});
+};
+
+startServer();
