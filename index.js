@@ -15,6 +15,7 @@ const DATABASENAME = 'jumpzoneapp';
 
 let db;
 
+// Función para conectar a la base de datos
 const connectToDatabase = async () => {
 	try {
 		const client = await MongoClient.connect(CONNECTION_STRING, {
@@ -28,9 +29,21 @@ const connectToDatabase = async () => {
 	}
 };
 
+// Middleware para verificar la conexión a la base de datos
+const checkDbConnection = (req, res, next) => {
+	if (!db) {
+		return res.status(500).send('La base de datos no está conectada');
+	}
+	next();
+};
+
+// Conectar a la base de datos al iniciar el servidor
 app.listen(5038, () => {
 	connectToDatabase();
 });
+
+// Usar el middleware en las rutas que requieren la conexión a la base de datos
+app.use(checkDbConnection);
 
 app.get('/api/jumpzoneapp/getnotes', async (req, res) => {
 	try {
