@@ -14,8 +14,7 @@ const DATABASENAME = 'jumpzoneapp';
 
 mongoose
 	.connect(CONNECTION_STRING, {
-		useNewUrlParser: true,
-		useUnifiedTopology: true,
+		dbName: DATABASENAME,
 	})
 	.then(() => {
 		console.log('¡Conectado a MongoDB!');
@@ -24,12 +23,15 @@ mongoose
 		console.error('Error conectando a la base de datos:', err);
 	});
 
-const noteSchema = new mongoose.Schema({
-	id: String,
-	hostName: String,
-	hostLink: String,
-	coments: String,
-});
+const noteSchema = new mongoose.Schema(
+	{
+		id: String,
+		hostName: String,
+		hostLink: String,
+		coments: String,
+	},
+	{ collection: 'jumpzone' }
+);
 
 const Note = mongoose.model('Note', noteSchema);
 
