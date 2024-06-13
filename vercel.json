@@ -14,5 +14,10 @@
     ],
     "env": {
       "PORT": "5038"
+    },
+    "functions": {
+      "api": {
+        "handler": "index.handler"
+      }
     }
   }
