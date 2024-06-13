@@ -15,52 +15,45 @@ const DATABASENAME = 'jumpzoneapp';
 
 let db;
 
-app.listen(5038, () => {
-	MongoClient.connect(
-		CONNECTION_STRING,
-		{ useUnifiedTopology: true },
-		(error, client) => {
-			if (error) {
-				throw error;
-			}
-			db = client.db(DATABASENAME);
-			console.log('¡Conectado a `' + DATABASENAME + '`!');
-		}
-	);
-});
-
-app.get('/api/jumpzoneapp/getnotes', (req, res) => {
-	db.collection('jumpzone')
-		.find({})
-		.toArray((error, result) => {
-			if (error) {
-				res.status(500).send(error);
-				return;
-			}
-			res.send(result);
+const connectToDatabase = async () => {
+	try {
+		const client = await MongoClient.connect(CONNECTION_STRING, {
+			useUnifiedTopology: true,
 		});
+		db = client.db(DATABASENAME);
+		console.log('¡Conectado a `' + DATABASENAME + '`!');
+	} catch (error) {
+		console.error('Error conectando a la base de datos:', error);
+		process.exit(1); // Salir si no puede conectarse a la base de datos
+	}
+};
+
+app.listen(5038, () => {
+	connectToDatabase();
 });
 
-app.post('/api/jumpzoneapp/AddNote', (req, res) => {
-	db.collection('jumpzone').countDocuments({}, (error, count) => {
-		if (error) {
-			res.status(500).send(error);
-			return;
-		}
-		db.collection('jumpzone').insertOne(
-			{
-				id: (count + 1).toString(),
-				hostName: req.body.hostName,
-				hostLink: req.body.hostLink,
-				coments: req.body.coments,
-			},
-			(err) => {
-				if (err) {
-					res.status(500).send(err);
-					return;
-				}
-				res.json('Agregado exitosamente');
-			}
-		);
-	});
+app.get('/api/jumpzoneapp/getnotes', async (req, res) => {
+	try {
+		const result = await db.collection('jumpzone').find({}).toArray();
+		res.send(result);
+	} catch (error) {
+		console.error('Error al obtener las notas:', error);
+		res.status(500).send('Error al obtener las notas.');
+	}
+});
+
+app.post('/api/jumpzoneapp/AddNote', async (req, res) => {
+	try {
+		const count = await db.collection('jumpzone').countDocuments({});
+		await db.collection('jumpzone').insertOne({
+			id: (count + 1).toString(),
+			hostName: req.body.hostName,
+			hostLink: req.body.hostLink,
+			coments: req.body.coments,
+		});
+		res.json('Agregado exitosamente');
+	} catch (error) {
+		console.error('Error al agregar la nota:', error);
+		res.status(500).send('Error al agregar la nota.');
+	}
 });
