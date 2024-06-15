@@ -41,12 +41,10 @@ app.get('/data', async (req, res) => {
 	}
 });
 
-// Ruta para agregar nota
 app.post('/addnote', async (req, res) => {
 	try {
 		const { hostName, hostLink, coments } = req.body;
 
-		// Verificar que los campos no sean undefined
 		if (!hostName || !hostLink || !coments) {
 			return res
 				.status(400)
